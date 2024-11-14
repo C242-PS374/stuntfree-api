@@ -7,7 +7,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from app.core.config import configs
-from app.model import Base, User, Permission, Role
+from app.model import Base, User
 
 cmd_kwargs = context.get_x_argument(as_dictionary=True)
 if "ENV" in cmd_kwargs:

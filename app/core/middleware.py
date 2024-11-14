@@ -1,4 +1,3 @@
-import asyncio
 from functools import wraps
 from dependency_injector.wiring import inject as di_inject
 from loguru import logger
@@ -10,27 +9,15 @@ def inject(func: Callable[..., Any]) -> Callable[..., Any]:
     @di_inject
     @wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
-        # Handle both async and sync functions
-        if asyncio.iscoroutinefunction(func):
-            result = await func(*args, **kwargs)
+        result = func(*args, **kwargs)
+        injected_services = [arg for arg in kwargs.values() if isinstance(arg, BaseService)]
+        if len(injected_services) == 0:
+            return result
         else:
-            result = func(*args, **kwargs)
-            
-        # Get injected services
-        injected_services = [
-            arg for arg in kwargs.values() 
-            if isinstance(arg, BaseService)
-        ]
-        
-        if injected_services:
             try:
-                # Do something with the last injected service if needed
-                service = injected_services[-1]
-                # Your service-related logic here
+                injected_services[-1].close_scoped_session()
             except Exception as e:
-                logger.error(f"Error in service injection: {e}")
-                raise
-                
-        return result
-    
+                logger.error(e)
+
+            return result
     return wrapper

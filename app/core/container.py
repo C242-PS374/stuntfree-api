@@ -9,7 +9,7 @@ from app.service import UserService
 class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
         modules=[
-            "app.api.v1.endpoints.role",
+            "app.api.v1.endpoints.user",
         ]
     )
 
