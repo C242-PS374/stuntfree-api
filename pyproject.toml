@@ -9,9 +9,10 @@ dependencies = [
     "dependency-injector>=4.42.0",
     "fastapi[standard]>=0.115.3",
     "loguru>=0.7.2",
-    "psycopg2>=2.9.10",
     "pydantic>=2.9.2",
     "pydantic-settings>=2.6.1",
     "pyjwt>=2.9.0",
     "sqlalchemy>=2.0.36",
+    "pycaret>=3.3.2",
+    "psycopg2-binary>=2.9.10",
 ]
