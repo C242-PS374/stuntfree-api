@@ -1,11 +1,15 @@
-from sqlalchemy import Column, Integer, String, Table, ForeignKey
-from sqlalchemy.orm import relationship
+from typing import Optional
+from sqlmodel import Field, Relationship, Date
+import enum
 
-from app.model.base_model import Base
+from app.model.base_model import BaseModel
+from sqlalchemy import Column, Enum
+from app.model.profile import Profile
 
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
-    password = Column(String)
+
+class User(BaseModel, table=True):
+    __tablename__: str = "users"
+
+    email: str = Field(index=True, unique=True)
+    password: str = Field()
+    profile: Optional["Profile"] = Relationship(back_populates="user")
