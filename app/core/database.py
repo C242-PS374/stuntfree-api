@@ -1,45 +1,31 @@
-from typing import Any, Generator
-from contextlib import contextmanager, AbstractContextManager
+from typing import Generator
+from contextlib import contextmanager
 
-from sqlalchemy import create_engine, orm
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.orm import Session
+from sqlmodel import SQLModel, Session, create_engine
 
-Base = declarative_base()
-
-class BaseModel(Base):
-    __abstract__ = True
-    id: Any
-    __name__: str
-
-    @declared_attr.directive
-    @classmethod
-    def __tablename__(cls) -> str:
-        return cls.__name__.lower()
-    
 class Database:
     def __init__(self, db_url: str) -> None:
-        self._engine = create_engine(db_url)
-        self._session_factory = orm.scoped_session(
-            orm.sessionmaker(
-                autocommit=False,
-                autoflush=False,
-                bind=self._engine
-            )
+        # Create engine with connection pooling
+        self._engine = create_engine(
+            db_url,
+            echo=False,  # Set to True to see SQL queries
+            pool_pre_ping=True  # Enable connection health checks
         )
 
     def create_database(self) -> None:
-        BaseModel.metadata.create_all(self._engine)
+        """Create all tables defined in SQLModel classes"""
+        SQLModel.metadata.create_all(self._engine)
 
     @contextmanager
-    def session(self) -> Generator[Session, Any, None]:
-        session: Session = self._session_factory()
+    def session(self) -> Generator[Session, None, None]:
+        """Provide a transactional scope around a series of operations"""
+        session = Session(self._engine)
         try:
             yield session
             session.commit()
-        except Exception as e:
+        except Exception:
             session.rollback()
-            raise 
+            raise
         finally:
+            session.expunge_all()
             session.close()
-

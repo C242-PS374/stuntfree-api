@@ -11,6 +11,7 @@ ENV: str = ""
 class Configs(BaseSettings):
     ENV: str = os.getenv("ENV", "development")
     API: str = "/api"
+    KEY: str = os.getenv("KEY", "secret")
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = os.getenv("PROJECT_NAME", "FastAPI")
     ENV_DATABASE_MAPPER: dict = {

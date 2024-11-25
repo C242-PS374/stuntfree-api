@@ -1,19 +1,19 @@
 """add user & profile tables
 
-Revision ID: b71f53763290
+Revision ID: fd7c8711fa03
 Revises: 
-Create Date: 2024-11-20 12:08:04.832605
+Create Date: 2024-11-25 07:21:15.079353
 
 """
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-import sqlmodel
-import sqlmodel.sql.sqltypes
+import sqlmodel 
+
 
 # revision identifiers, used by Alembic.
-revision: str = 'b71f53763290'
+revision: str = 'fd7c8711fa03'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -25,6 +25,8 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('email', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('password', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
@@ -38,7 +40,7 @@ def upgrade() -> None:
     sa.Column('child_gender', sa.Enum('male', 'female', name='gender'), nullable=True),
     sa.Column('child_height', sa.Float(), nullable=True),
     sa.Column('child_weight', sa.Float(), nullable=True),
-    sa.Column('trimester', sa.Integer(), nullable=True),
+    sa.Column('gestasional_age', sa.Integer(), nullable=True),
     sa.Column('address', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('is_environment_suitable', sa.Boolean(), nullable=True),
     sa.Column('is_nutrition_fulfilled', sa.Boolean(), nullable=True),
@@ -59,4 +61,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_users_id'), table_name='users')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')
+
+    op.execute("DROP TYPE IF EXISTS stage")
+    op.execute("DROP TYPE IF EXISTS gender")
     # ### end Alembic commands ###
