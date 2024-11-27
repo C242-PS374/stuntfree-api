@@ -43,7 +43,8 @@ class Configs(BaseSettings):
     # Auth
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "secret")
     JWT_ACCESS_TOKEN_EXP: str = os.getenv("ACCESS_TOKEN_EXP", "1d")
-    JWT_REFRESH_TOKEN_EXP: str = os.getenv("REFRESH_TOKEN_EXP", "7d")  
+    JWT_REFRESH_TOKEN_EXP: str = os.getenv("REFRESH_TOKEN_EXP", "7d")
+    JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256") 
 
     # Cors
     CORS_ORIGINS: List[str] = os.getenv("CORS_ALLOWED_HOSTS", "*").split(",")

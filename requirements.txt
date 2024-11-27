@@ -77,6 +77,7 @@ plotly-resampler==0.10.0
 pmdarima==2.0.4
 prompt-toolkit==3.0.48
 psutil==6.1.0
+psycopg2==2.9.10
 psycopg2-binary==2.9.10
 ptyprocess==0.7.0
 pure-eval==0.2.3

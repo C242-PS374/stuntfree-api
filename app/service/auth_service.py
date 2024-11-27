@@ -1,13 +1,15 @@
 import logging
 import bcrypt
+import base64
 
 from typing import Any
-from passlib.context import CryptContext
+from fastapi import HTTPException
 
 from app.core.config import configs
+from app.core import security
 from app.repository.user_repository import UserRepository
 from app.service.base_service import BaseService
-from app.schema.auth_schema import RegisterSchema
+from app.schema.auth_schema import RegisterSchema, LoginSchema
 from app.model.profile import Profile
 
 from app.core.exceptions import DuplicatedError, InternalServerError
@@ -40,13 +42,46 @@ class AuthService(BaseService):
         return {
             "message": "User successfully registered",
         }   
+    
+    def sign_in(self, credentials: LoginSchema) -> Any:
+        result = self.user_repository.get_user_by_options("email", credentials.email)
+
+        if result is None:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+
+        is_password_valid = self.verify_password(credentials.password, result[0].password)
+
+        if not is_password_valid:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        access_token = security.create_access_token(
+            data={
+                "sub": result[0].id
+            }
+        )
+
+        refresh_token = security.create_refresh_token(
+            data={
+                "sub": result[0].id
+            }
+        )
+
+        return {
+            "message": "User successfully logged in",
+            "token": {
+                "token_type": "bearer",
+                "access_token": access_token,
+                "refresh_token": refresh_token
+            },
+        }
         
     def hash_password(self, password: str) -> str:
         salt = bcrypt.gensalt()
         hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
 
-        return hashed.decode("utf-8")
+        return base64.b64encode(hashed).decode("utf-8")
     
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+        hashed_bytes = base64.b64decode(hashed_password)
+        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_bytes)
