@@ -2,7 +2,8 @@ from datetime import datetime
 from typing import Any, Union, TypedDict, Optional
 from app.repository.user_repository import UserRepository
 from app.service.base_service import BaseService
-from app.schema import BaseUser, Profile
+from app.model import Profile
+from app.schema import AddPersonalInfo
 
 from fastapi import HTTPException
 
@@ -56,3 +57,14 @@ class UserService(BaseService):
                 updated_at=profile.updated_at
             )
         )
+    
+    def attach_user_profile(self, user_id: int, profile_info: AddPersonalInfo) -> Profile:
+        is_profile_exist = self.user_repository.get_user_by_options("id", user_id)
+        if is_profile_exist is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        profile = self.user_repository.update_user_profile(user_id, profile=Profile(**profile_info.model_dump()))
+
+        return profile
+
+        

@@ -73,3 +73,17 @@ class UserRepository(BaseRepository):
 
             session.expunge_all()
             return profile
+        
+    def update_user_profile(self, user_id: int, profile: Profile) -> Profile:
+        with self.session_factory() as session:
+            statement = select(Profile).where(Profile.user_id == user_id)
+            result = session.exec(statement).one()
+
+            result = result.model_copy(update=profile.model_dump(exclude_unset=True))
+
+            result = session.merge(result)
+            session.commit()
+            session.refresh(result)
+
+            session.expunge_all()
+            return result
