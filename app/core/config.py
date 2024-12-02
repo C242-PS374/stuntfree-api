@@ -16,8 +16,8 @@ class Configs(BaseSettings):
     PROJECT_NAME: str = os.getenv("PROJECT_NAME", "FastAPI")
     ENV_DATABASE_MAPPER: dict = {
         "development": os.getenv("DB_NAME", "FastAPI"),
-        "stage": os.getenv("DB_NAME", "FastAPI") + "-stage",
-        "testing": os.getenv("DB_NAME", "FastAPI") + "-test",
+        "stage": os.getenv("DB_NAME", "FastAPI") + "_stage",
+        "testing": os.getenv("DB_NAME", "FastAPI") + "_test",
         "production": os.getenv("DB_NAME", "FastAPI"),
     }
     DB_ENGINE_MAPPER : dict = {
