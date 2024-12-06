@@ -30,6 +30,9 @@ class Configs(BaseSettings):
     DATETIME_FORMAT: str = "%Y-%m-%dT%H:%M:%S"
     DATE_FORMAT: str = "%Y-%m-%d"
 
+    GRPC_SERVER_HOST: str = os.getenv("GRPC_SERVER_HOST", "localhost")
+    GRPC_SERVER_PORT: str = os.getenv("GRPC_SERVER_PORT", "50051")
+
     # Database
     DB: str = os.getenv("DB", "postgresql")
     DB_USER: str = os.getenv("DB_USER", "postgres")
