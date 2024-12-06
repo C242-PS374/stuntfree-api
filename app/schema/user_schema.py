@@ -11,6 +11,7 @@ from app.util.schema import AllOptional
 class Profile(BaseModel):
     id: int
     user_id: int
+    stage: str
     name: str
     created_at: datetime | None
     updated_at: datetime | None
