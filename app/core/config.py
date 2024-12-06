@@ -25,6 +25,8 @@ class Configs(BaseSettings):
         "mysql": "mysql+pymysql",
     }
 
+    GRPC_SERVER_URL: str = os.getenv("GRPC_SERVER_URL", "0.0.0.0") 
+
     PROJECT_ROOT: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     DATETIME_FORMAT: str = "%Y-%m-%dT%H:%M:%S"

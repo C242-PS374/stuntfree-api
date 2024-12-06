@@ -4,15 +4,15 @@ from app.generated import ml_services_pb2, ml_services_pb2_grpc
 
 from app.core.container import Container
 from app.core.middleware import inject
+from app.core.config import configs
 
 router = APIRouter(prefix="/machine-learning", tags=["machine-learning"])
 
-GRPC_SERVER_HOST = "localhost"
-GRPC_SERVER_PORT = 52431
+GRPC_SERVER_URL = configs.GRPC_SERVER_URL
 
 def get_grpc_channel():
     try:
-        channel = grpc.insecure_channel(f"{GRPC_SERVER_HOST}:{GRPC_SERVER_PORT}")
+        channel = grpc.secure_channel(GRPC_SERVER_URL, grpc.ssl_channel_credentials())
         grpc.channel_ready_future(channel).result(timeout=5)
         return channel
     except grpc.RpcError as e:
