@@ -18,7 +18,7 @@ class AuthService(BaseService):
     def __init__(self, user_repository: UserRepository):
         self.user_repository = user_repository
         
-        super().__init__(user_repository)
+        super().__init__(user_repository) # type: ignore
 
     def sign_up(self, user: RegisterSchema) -> Any:
         is_user_exist = self.user_repository.get_user_by_options("email", user.email)

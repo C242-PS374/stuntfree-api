@@ -10,6 +10,7 @@ from fastapi import HTTPException
 class UserProfileDict(TypedDict):
     id: int
     user_id: int
+    stage: str
     name: str
     created_at: datetime | None
     updated_at: datetime | None
@@ -25,7 +26,7 @@ class UserDict(TypedDict):
 class UserService(BaseService):
     def __init__(self, user_repository: UserRepository):
         self.user_repository = user_repository
-        super().__init__(user_repository)
+        super().__init__(user_repository) # type: ignore
 
     def get_users(self) -> Any:
         data = self.user_repository.get_users()
@@ -52,6 +53,7 @@ class UserService(BaseService):
             profile=UserProfileDict(
                 id=profile.id or 0, 
                 user_id=profile.user_id,
+                stage=str(profile.stage.value), # type: ignore
                 name=profile.name,
                 created_at=profile.created_at,
                 updated_at=profile.updated_at

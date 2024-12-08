@@ -25,12 +25,14 @@ class Configs(BaseSettings):
         "mysql": "mysql+pymysql",
     }
 
-    GRPC_SERVER_URL: str = os.getenv("GRPC_SERVER_URL", "0.0.0.0") 
-
     PROJECT_ROOT: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     DATETIME_FORMAT: str = "%Y-%m-%dT%H:%M:%S"
     DATE_FORMAT: str = "%Y-%m-%d"
+
+    GRPC_SERVER_URL: str = os.getenv("GRPC_SERVER_URL", "0.0.0.0") 
+    GRPC_SERVER_HOST: str = os.getenv("GRPC_SERVER_HOST", "localhost")
+    GRPC_SERVER_PORT: str = os.getenv("GRPC_SERVER_PORT", "50051")
 
     # Database
     DB: str = os.getenv("DB", "postgresql")
