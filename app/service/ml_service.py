@@ -23,10 +23,17 @@ class MLServiceClient(BaseService):
     @contextmanager
     def get_channel_stub(self):
         try:
-            with grpc.secure_channel(GRPC_SERVER_URL, grpc.ssl_channel_credentials()) as channel:
-                grpc.channel_ready_future(channel).result(timeout=5)
-                stub = ml_services_pb2_grpc.MLServiceStub(channel)
-                yield stub
+            if configs.ENV == "production":
+                with grpc.secure_channel(GRPC_SERVER_URL, grpc.ssl_channel_credentials()) as channel:
+                    grpc.channel_ready_future(channel).result(timeout=5)
+                    stub = ml_services_pb2_grpc.MLServiceStub(channel)
+                    yield stub
+            else:
+                with grpc.insecure_channel(GRPC_SERVER_URL) as channel:
+                    grpc.channel_ready_future(channel).result(timeout=5)
+                    stub = ml_services_pb2_grpc.MLServiceStub(channel)
+                    yield stub
+
         except grpc.RpcError as e:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
