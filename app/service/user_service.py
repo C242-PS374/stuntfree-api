@@ -53,7 +53,7 @@ class UserService(BaseService):
             profile=UserProfileDict(
                 id=profile.id or 0, 
                 user_id=profile.user_id,
-                stage=str(profile.stage.value), # type: ignore
+                stage=profile.stage.value if profile.stage else "",
                 name=profile.name,
                 created_at=profile.created_at,
                 updated_at=profile.updated_at
