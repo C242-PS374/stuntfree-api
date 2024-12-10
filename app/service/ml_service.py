@@ -37,7 +37,7 @@ class MLServiceClient(BaseService):
     @contextmanager
     def get_channel_stub(self):
         try:
-            if configs.ENV == "production":
+            if configs.ENV == "production" or configs.ENV == "stage":
                 with grpc.secure_channel(GRPC_SERVER_URL, grpc.ssl_channel_credentials()) as channel:
                     grpc.channel_ready_future(channel).result(timeout=5)
                     stub = ml_services_pb2_grpc.MLServiceStub(channel)
