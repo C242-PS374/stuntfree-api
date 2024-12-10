@@ -8,7 +8,7 @@ from sqlmodel import SQLModel
 from alembic import context
 
 from app.core.config import configs
-from app.model import User
+from app.model import FoodIntake, User
 
 cmd_kwargs = context.get_x_argument(as_dictionary=True)
 if "ENV" in cmd_kwargs:
