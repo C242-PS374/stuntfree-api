@@ -3,8 +3,8 @@ from dependency_injector import containers, providers
 from app.core.config import configs
 from app.core.database import Database
 
-from app.repository import UserRepository, FoodRepository
-from app.service import UserService, AuthService, MLServiceClient
+from app.repository import UserRepository, NutritionLogRepository
+from app.service import UserService, AuthService, MLServiceClient, JournallingService
 
 
 class Container(containers.DeclarativeContainer):
@@ -21,8 +21,9 @@ class Container(containers.DeclarativeContainer):
     db = providers.Singleton(Database, db_url=configs.DB_URI)
 
     user_repository = providers.Factory(UserRepository, session_factory=db.provided.session)
-    food_repository = providers.Factory(FoodRepository, session_factory=db.provided.session)
+    nutrition_logs_repository = providers.Factory(NutritionLogRepository, session_factory=db.provided.session)
 
     user_service = providers.Factory(UserService, user_repository=user_repository)
     auth_service = providers.Factory(AuthService, user_repository=user_repository)
-    ml_service = providers.Factory(MLServiceClient, user_repository=user_repository, food_repository=food_repository)
+    ml_service = providers.Factory(MLServiceClient, user_repository=user_repository, nutrition_logs_repository=nutrition_logs_repository)
+    journalling_service = providers.Factory(JournallingService, nutrition_logs_repository=nutrition_logs_repository)

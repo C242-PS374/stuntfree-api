@@ -50,6 +50,9 @@ class AddPersonalInfo(BaseModel):
     child_height: Optional[float] = None
     child_weight: Optional[float] = None
 
+    child_born_weight: Optional[float] = None
+    child_born_height: Optional[float] = None
+
     gestasional_age: Optional[int] = None
 
     address: str
@@ -59,7 +62,7 @@ class AddPersonalInfo(BaseModel):
     @model_validator(mode='after')
     def validate_stage_specific_fields(self):
         if self.stage == Stage.infancy:
-            required_infancy_fields = ['child_dob', 'child_gender', 'child_height', 'child_weight']
+            required_infancy_fields = ['child_dob', 'child_gender', 'child_height', 'child_weight', 'child_born_weight', 'child_born_height']
             for field in required_infancy_fields:
                 if getattr(self, field) is None:
                     raise ValueError(f"{field} is required for infancy stage")

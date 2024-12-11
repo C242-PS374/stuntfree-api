@@ -34,6 +34,8 @@ class Configs(BaseSettings):
     GRPC_SERVER_HOST: str = os.getenv("GRPC_SERVER_HOST", "localhost")
     GRPC_SERVER_PORT: str = os.getenv("GRPC_SERVER_PORT", "50051")
 
+    GCP_UPLOADS_BUCKET_NAME: str = os.getenv("GCP_UPLOADS_BUCKET", "uploads")
+
     # Database
     DB: str = os.getenv("DB", "postgresql")
     DB_USER: str = os.getenv("DB_USER", "postgres")

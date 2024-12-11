@@ -1,3 +1,3 @@
 from app.repository.base_repository import BaseRepository
 from app.repository.user_repository import UserRepository
-from app.repository.food_repository import FoodRepository
+from app.repository.nutrition_logs_repository import NutritionLogRepository

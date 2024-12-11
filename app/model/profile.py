@@ -24,6 +24,8 @@ class Profile(BaseModel, table=True):
     child_gender: Optional[Gender] = Field(sa_column=Column(Enum(Gender), nullable=True), default=None)
     child_height: Optional[float] = Field(nullable=True, default=None)
     child_weight: Optional[float] = Field(nullable=True, default=None)
+    child_born_height: Optional[float] = Field(nullable=True, default=None)
+    child_born_weight: Optional[float] = Field(nullable=True, default=None)
     gestasional_age: Optional[int] = Field(nullable=True, default=None)
     address: Optional[str] = Field(nullable=True, default=None)
     is_environment_suitable: Optional[bool] = Field(default=False)

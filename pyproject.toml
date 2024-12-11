@@ -22,4 +22,5 @@ dependencies = [
     "langchain>=0.3.10",
     "langchain-google-vertexai>=2.0.8",
     "langchain-community>=0.3.10",
+    "google-cloud-storage>=2.19.0",
 ]
