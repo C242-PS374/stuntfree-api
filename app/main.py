@@ -20,15 +20,15 @@ class App(FastAPI):
         self.container = Container()
         self.db = self.container.db()
 
-        # cors
-        if configs.CORS_ORIGINS:
-            self.app.add_middleware(
-                CORSMiddleware,
-                allow_origins=[str(origin) for origin in configs.CORS_ORIGINS],
-                allow_credentials=True,
-                allow_methods=["*"],
-                allow_headers=["*"]
-            )
+        # # cors
+        # if configs.CORS_ORIGINS:
+        self.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"]
+        )
 
         @self.app.get("/")
         def root():

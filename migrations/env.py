@@ -8,7 +8,7 @@ from sqlmodel import SQLModel
 from alembic import context
 
 from app.core.config import configs
-from app.model import NutritionLog, NutritionLogFoods
+from app.model import DailyNutritionSummary
 
 cmd_kwargs = context.get_x_argument(as_dictionary=True)
 if "ENV" in cmd_kwargs:
