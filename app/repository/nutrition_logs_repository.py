@@ -1,13 +1,14 @@
 from typing import Callable, List
 from contextlib import AbstractContextManager
 from datetime import datetime, time, timedelta, date
+from collections import Counter
 
 from fastapi import HTTPException
 
 from sqlmodel import Session, select
 from sqlalchemy.orm import joinedload
 
-from app.model import NutritionLog, NutritionLogFoods
+from app.model import NutritionLog, NutritionLogFoods, DailyNutritionSummary
 from app.schema.food_schema import FoodSchema
 from app.repository.base_repository import BaseRepository
 from datetime import date
@@ -55,11 +56,9 @@ class NutritionLogRepository(BaseRepository):
             today = date.today()
             start_of_today = datetime.combine(today, time())
             end_of_today = start_of_today + timedelta(days=1)
-
-            print(end_of_today)
-
+            
             statement = select(NutritionLog).where(
-                (NutritionLog.created_at or date.today()) >= start_of_today,
+                (NutritionLog.created_at or date.today()) >= start_of_today, # or date.today() is only for passing pylance, created_at will never be None
                 (NutritionLog.created_at or date.today()) < end_of_today,
                 NutritionLog.user_id == user_id, 
             )
@@ -80,4 +79,57 @@ class NutritionLogRepository(BaseRepository):
 
             session.expunge_all()
             return results
+
+    def summarize_nutrition_logs(self):
+        with self.session_factory() as session:
+            try:
+                today = date.today()
+
+                statement = select(NutritionLog.user_id, NutritionLog.is_akg_fulfilled).where(
+                    (NutritionLog.created_at or date.today()) >= today,
+                )
+
+                logs = session.exec(statement).all()
+                print(logs)
+                user_logs = {}
+                for log in logs:
+                    user_logs.setdefault(log.user_id, []).append(log.is_akg_fulfilled) # type: ignore
+
+                for user_id, is_akg_fulfilled_list in user_logs.items():
+                    
+                    count_true = is_akg_fulfilled_list.count(True)
+                    count_false = is_akg_fulfilled_list.count(False)
+
+                    mode = Counter(is_akg_fulfilled_list).most_common(1)[0][0]
+
+                    existing_summary = session.exec(
+                        select(DailyNutritionSummary).where(
+                            DailyNutritionSummary.user_id == user_id,
+                            (DailyNutritionSummary.created_at or date.today()) >= today,
+                        )
+                    ).one_or_none()
+
+                    if existing_summary:
+                        existing_summary.akg_fulfilled_count = count_true
+                        existing_summary.akg_not_fulfilled_count = count_false
+                        existing_summary.akg_fulfilled_mode = mode
+                    else:
+                        summary = DailyNutritionSummary(
+                            user_id=user_id,
+                            akg_fulfilled_count=count_true,
+                            akg_not_fulfilled_count=count_false,
+                            akg_fulfilled_mode=1 if mode else 0,
+                            created_at=None
+                        )
+
+                        session.add(summary)
+                
+                session.commit()
+
+                return True
+
+            except Exception as e:
+                print(e)
+                session.rollback()
+                raise HTTPException(status_code=500, detail="Internal Server Error")
 

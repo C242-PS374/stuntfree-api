@@ -2,6 +2,7 @@ import grpc
 import datetime
 import json
 import re
+import base64
 
 from typing import List, Any
 from fastapi import status
@@ -18,6 +19,8 @@ from google.cloud import aiplatform
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompt_values import PromptValue
 from langchain_google_vertexai import ChatVertexAI
+from langchain_core.messages import HumanMessage
+from vertexai.preview.generative_models import Image
 
 from app.util.template import EXAMPLE_STRUCTURE_RESPONSE, DAILY_NUTRITION
 
@@ -34,6 +37,7 @@ class MLServiceClient(BaseService):
         self.user_repository = user_repository
         self.nutrition_logs_repository = nutrition_logs_repository
         self.genai_model = ChatVertexAI(model="gemini-1.5-flash")
+        self.genai_vision = ChatVertexAI(model="gemini-pro-vision")
 
         super().__init__(user_repository) # type: ignore
 
@@ -78,20 +82,75 @@ class MLServiceClient(BaseService):
                 foods = response.result.split(",")
 
                 if "unknown" in foods:
-                    raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Failed to detect food")
+                    EXAMPLE_STRUCTURE = [
+                        {
+                            "nama": "Nasi Goreng Ayam",
+                            "jumlah": 1,
+                            "tipe": "Makanan"
+                        },
+                        {
+                            "nama": "Es Teh Manis",
+                            "jumlah": 2,
+                            "tipe": "Minuman"
+                        }
+                    ]
+
+                    image_message = {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{base64.b64encode(image).decode('utf-8')}"
+                        },
+                    }
+
+                    MAX_WORDS = 5
+
+                    text_message = {
+                        "type": "text",
+                        "text": f"""
+                        You are a culinary expert and you are asked to detect dishes, most of what you will predict is Indonesian food, but it is possible that there are other types of food. Returns the name of the food with the number of servings in Camel Case writing format and can be understood by Indonesians. Give a maximum of {MAX_WORDS} words only, so summarize the name of the dish with only {MAX_WORDS} words.
+                        The return will be JSON like this. MAKE SURE YOU FOLLOW THE STRUCTURE OF THE EXAMPLE
+                        Example Returns:
+                        {EXAMPLE_STRUCTURE}
+                        Note:
+                        Tipe is only output 'Minuman' or 'Makanan' only!
+                        You can tell the condiment but only the primary thing only based on photo!
+                        You must only return the shown dish name and the number of servings only based on photo. If not, you not allowed to tell it!
+                        Make sure the name of the dish is in Camel Case writing format and can be understood by Indonesians and give the value to the 'nama'!
+                        Make sure the quantity of the dish is in integer give the value to the 'jumlah'!
+                        I don't need any explanation except a well-formatted json format like in the example. BEFORE YOU GIVE THE ANSWER, YOU MUST RE-CHECK THE JSON STRUCTURE IS LIKE THE EXAMPLE STRUCTURE.
+                        """,
+                    }
+
+                    message = HumanMessage(content=[text_message, image_message])
+
+                    output = self.genai_vision.invoke([message]) 
+
+                    food_generated = json.loads(output.content.replace("'", '"')) # type: ignore
+                    foods = []
+                    for food in food_generated:
+                        foods.append({
+                            "name": food["nama"],
+                            "qty": food["jumlah"]
+                        })
 
                 results = []
                 for food in foods:
-                    nutritions = self.genai_model.invoke(
-                        self.get_nutrition_from_foods({food: 1})
-                    )
+                    if "name" in food:
+                        nutritions = self.genai_model.invoke(
+                            self.get_nutrition_from_foods({food["name"]: food["qty"]})
+                        )
+
+                    else:
+                        nutritions = self.genai_model.invoke(
+                            self.get_nutrition_from_foods({food: 1})
+                        )
                     
                     cleaned_nutrition = re.sub(r'^```json\s*|\s*```$', '', nutritions.content, flags=re.MULTILINE) # type: ignore
                     cleaned_nutrition = re.sub(r"'", '"', cleaned_nutrition)
                     data = json.loads(cleaned_nutrition.strip())
 
                     results.append({
-                        "name": food,
+                        "name": food["name"] if "name" in food else food,
                         "qty": 1,
                         "nutrition": data["foods"][0]["nutrition"]
                     }) 

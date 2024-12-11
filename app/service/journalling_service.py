@@ -22,3 +22,6 @@ class JournallingService(BaseService):
 
     def get_today_logs(self, user_id: int) -> Any:
         return self.nutrition_logs_repository.get_today_nutrition_logs(user_id)
+    
+    def summarize_logs(self) -> Any:
+        return self.nutrition_logs_repository.summarize_nutrition_logs()
