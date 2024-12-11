@@ -69,10 +69,10 @@ def submit_food_log(
         foods = json.loads(body)
         validated_foods = [FoodSchema(**food) for food in foods]
         
-        service.predict_nutrition_and_insert(user_id, foods, image)
-        print(validated_foods)
+        service.predict_nutrition_and_insert(user_id, validated_foods, image)
+        
+        return {"message": "Food log submitted"}
+
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Validation error: {e}")
     
-
-    return {"message": "Food log submitted"}
