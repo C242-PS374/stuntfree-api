@@ -57,14 +57,17 @@ class NutritionLogRepository(BaseRepository):
             end_of_today = start_of_today + timedelta(days=1)
 
             print(end_of_today)
-            
+
             statement = select(NutritionLog).where(
                 (NutritionLog.created_at or date.today()) >= start_of_today,
                 (NutritionLog.created_at or date.today()) < end_of_today,
                 NutritionLog.user_id == user_id, 
             )
 
-            exec = session.exec(statement).one()
+            exec = session.exec(statement).one_or_none()
+
+            if exec is None:
+                return []
 
             results = {
                 "id": exec.id,
