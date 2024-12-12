@@ -177,7 +177,6 @@ class MLServiceClient(BaseService):
         if user is None or profile is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         
-        print(foods)
         try:
             usertype = "mom" if profile.stage == "pregnancy" else "child"
             foodnames = {food.name: food.qty for food in foods}
@@ -208,6 +207,7 @@ class MLServiceClient(BaseService):
             
 
         except Exception as e:
+            print(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to predict nutrition"

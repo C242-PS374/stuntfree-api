@@ -38,7 +38,7 @@ def add_food(
 
     results = service.get_today_logs(user_id)
     return {
-        "message": "Food added",
+        "message": "Today's food logs retrieved",
         "result": results
     }
 
@@ -63,6 +63,7 @@ def submit_food_log(
         return {"message": "Food log submitted"}
 
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=400, detail=f"Validation error: {e}")
     
 @router.get("/your-stunting-risk", status_code=status.HTTP_200_OK)

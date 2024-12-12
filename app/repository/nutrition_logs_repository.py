@@ -56,26 +56,30 @@ class NutritionLogRepository(BaseRepository):
             today = date.today()
             start_of_today = datetime.combine(today, time())
             end_of_today = start_of_today + timedelta(days=1)
-            
+
             statement = select(NutritionLog).where(
                 (NutritionLog.created_at or date.today()) >= start_of_today, # or date.today() is only for passing pylance, created_at will never be None
                 (NutritionLog.created_at or date.today()) < end_of_today,
                 NutritionLog.user_id == user_id, 
             )
 
-            exec = session.exec(statement).one_or_none()
+            exec = session.exec(statement).all()
 
             if exec is None:
                 return []
 
-            results = {
-                "id": exec.id,
-                "is_akg_fulfilled": exec.is_akg_fulfilled,
-                "user_id": exec.user_id,
-                "img_url": exec.img_url,
-                "created_at": exec.created_at,
-                "foods": [{"id": food.id, "name": food.name, "qty": food.qty} for food in exec.foods],
-            }
+            results = []
+            for log in exec:
+                result = {
+                    "id": log.id,
+                    "is_akg_fulfilled": log.is_akg_fulfilled,
+                    "user_id": log.user_id,
+                    "img_url": log.img_url,
+                    "created_at": log.created_at,
+                    "foods": [{"id": food.id, "name": food.name, "qty": food.qty} for food in log.foods],
+                }
+                
+                results.append(result)
 
             session.expunge_all()
             return results
@@ -90,7 +94,7 @@ class NutritionLogRepository(BaseRepository):
                 )
 
                 logs = session.exec(statement).all()
-                print(logs)
+                
                 user_logs = {}
                 for log in logs:
                     user_logs.setdefault(log.user_id, []).append(log.is_akg_fulfilled) # type: ignore
