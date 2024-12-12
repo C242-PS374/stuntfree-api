@@ -25,3 +25,6 @@ class JournallingService(BaseService):
     
     def summarize_logs(self) -> Any:
         return self.nutrition_logs_repository.summarize_nutrition_logs()
+
+    def weekly_summarize_logs(self) -> Any:
+        return self.nutrition_logs_repository.weekly_summarize_nutrition_logs()

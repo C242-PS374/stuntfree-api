@@ -17,8 +17,3 @@ def health_check(
 ):
     status =  service.health_check()
     return {"status": status}
-
-@router.post("/predict/stunting", status_code=status.HTTP_200_OK)
-@inject
-def predict_stunting():
-    pass

@@ -42,17 +42,6 @@ def add_food(
         "result": results
     }
 
-@router.get("/food/summary", status_code=status.HTTP_201_CREATED)
-@inject
-def check_summary(
-    service: JournallingService = Depends(Provide[Container.journalling_service]),
-):
-
-    service.summarize_logs()
-    return {
-        "message": "Logs summarized",
-    }
-
 @router.post("/food/submit-log", status_code=status.HTTP_201_CREATED)
 @inject
 def submit_food_log(
@@ -76,3 +65,36 @@ def submit_food_log(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Validation error: {e}")
     
+@router.get("/your-stunting-risk", status_code=status.HTTP_200_OK)
+@inject
+def get_stunting_risk(
+    current_user: UserDict = Depends(get_current_user),
+    service: MLServiceClient = Depends(Provide[Container.ml_service]),
+):
+    user_id = current_user["id"]
+    risk = service.predict_stunting(user_id)
+    return {
+        "message": "Stunting risk calculated",
+        "result": risk
+    }
+
+@router.post("/nutrition/weekly-summary", status_code=status.HTTP_201_CREATED)
+@inject
+def get_weekly_summary(
+    service: JournallingService = Depends(Provide[Container.journalling_service]),
+):
+    service.weekly_summarize_logs()
+    return {
+        "message": "Nutrition logs summarized",
+    }
+
+@router.post("/nutrition/daily-summary", status_code=status.HTTP_201_CREATED)
+@inject
+def check_summary(
+    service: JournallingService = Depends(Provide[Container.journalling_service]),
+):
+
+    service.summarize_logs()
+    return {
+        "message": "Logs summarized",
+    }

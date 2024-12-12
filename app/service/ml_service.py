@@ -3,6 +3,7 @@ import datetime
 import json
 import re
 import base64
+import math
 
 from typing import List, Any
 from fastapi import status
@@ -10,6 +11,7 @@ from contextlib import contextmanager
 from dateutil.relativedelta import relativedelta
 
 from app.core.config import configs
+from app.model import Profile
 from app.repository import UserRepository, NutritionLogRepository 
 from app.service.base_service import BaseService
 from app.schema.food_schema import FoodSchema
@@ -58,7 +60,7 @@ class MLServiceClient(BaseService):
         except grpc.RpcError as e:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"Could not connect to gRPC server: {e.details()}", # type: ignore
+                detail="gRPC service unavailable", # type: ignore
             )
 
     def health_check(self):
@@ -160,13 +162,13 @@ class MLServiceClient(BaseService):
         except grpc.RpcError as e:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"Service unavailable: {e.details()}", # type: ignore
+                detail=f"gRPC service unavailable", # type: ignore
             )
         
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to scan food: {str(e)}"
+                detail=f"Failed to scan food"
             )
             
         
@@ -208,23 +210,83 @@ class MLServiceClient(BaseService):
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to predict nutrition: {str(e)}"
+                detail=f"Failed to predict nutrition"
             )
 
-    def predict_stunting(self, age, birth_weight, birth_length, body_weight, body_length, is_sanitized_place, is_healthy_food):
-        with self.get_channel_stub() as stub:
-            request = ml_services_pb2.StuntingRequest(
-                age=age,
-                birth_weight=birth_weight,
-                birth_length=birth_length,
-                body_weight=body_weight,
-                body_length=body_length,
-                is_sanitized_place=is_sanitized_place,
-                is_healthy_food=is_healthy_food
-            )
-            response = stub.PredictStunting(request)
-            return response.stunting_status
+    def predict_stunting(self, user_id: int):
+        user, profile = self.user_repository.get_user_by_options("id", user_id) or (None, None)
+
+        if user is None or profile is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        if profile.stage == "pregnancy":
+            return self.predict_pregnancy_stunting(profile)
+        else:
+            return self.predict_infant_stunting(profile)
+
         
+    def predict_infant_stunting(self, profile: Profile):
+        child_dob = datetime.datetime.strptime(str(profile.child_dob), "%Y-%m-%d")
+        age = relativedelta(datetime.datetime.today(), child_dob).days
+
+        try:
+            with self.get_channel_stub() as stub:
+                request = ml_services_pb2.StuntingRequest(
+                    age=age,
+                    birth_length=math.floor(profile.child_born_height or 0),
+                    birth_weight=profile.child_born_weight,
+                    body_length=profile.child_height,
+                    body_weight=profile.child_weight,
+                    is_healthy_food=profile.is_nutrition_fulfilled,
+                    is_sanitized_place=profile.is_environment_suitable
+                )
+
+                response = stub.PredictStunting(request)
+                if int(response.stunting_status) == 1:
+                    return "Not-Healthy"
+                else:
+                    return "Healthy"
+                
+        except grpc.RpcError as e:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Service unavailable",
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Something went wrong"
+            )
+        
+    def predict_pregnancy_stunting(self, profile: Profile):
+        try:
+            with self.get_channel_stub() as stub:
+                request = ml_services_pb2.PregnantStuntingRequest(
+                    gestasional_age=profile.gestasional_age,
+                    is_healthy_food=profile.is_nutrition_fulfilled,
+                    is_sanitized_place=profile.is_environment_suitable
+                )
+
+                response = stub.PredictPregnantStunting(request)
+                
+                if int(response.stunting_status) == 1:
+                    return "Not-Healthy"
+                else:
+                    return "Healthy"
+                
+        except grpc.RpcError as e:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Service unavailable",
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Something went wrong"
+            )
+        
+
+
     
     def get_nutrition_from_foods(self, foods: dict[str, int]) -> PromptValue:
         template = self._get_nutrition_prompt()

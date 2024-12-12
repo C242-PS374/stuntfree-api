@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from sqlmodel import Session, select
 from sqlalchemy.orm import joinedload
 
-from app.model import NutritionLog, NutritionLogFoods, DailyNutritionSummary
+from app.model import NutritionLog, NutritionLogFoods, DailyNutritionSummary, Profile
 from app.schema.food_schema import FoodSchema
 from app.repository.base_repository import BaseRepository
 from datetime import date
@@ -129,7 +129,53 @@ class NutritionLogRepository(BaseRepository):
                 return True
 
             except Exception as e:
-                print(e)
+                session.rollback()
+                raise HTTPException(status_code=500, detail="Internal Server Error")
+            
+    def weekly_summarize_nutrition_logs(self):
+        with self.session_factory() as session:
+            try:
+                today = date.today()
+                last_week = today - timedelta(days=7)
+
+                statement = select(
+                    DailyNutritionSummary.user_id,
+                    DailyNutritionSummary.akg_fulfilled_count,
+                    DailyNutritionSummary.akg_not_fulfilled_count,
+                    DailyNutritionSummary.akg_fulfilled_mode,
+                ).where((DailyNutritionSummary.created_at or date.today()) >= last_week)
+                logs = session.exec(statement).all()
+
+                user_logs = {}
+                for log in logs:
+                    user_logs.setdefault(log.user_id, []).append(log) # type: ignore
+
+                weekly_summary = {}
+                for user_id, summaries in user_logs.items():
+                    total_fulfilled = sum(summary.akg_fulfilled_count for summary in summaries)
+                    total_not_fulfilled = sum(summary.akg_not_fulfilled_count for summary in summaries)
+
+                    modes = [summary.akg_fulfilled_mode for summary in summaries]
+                    mode = Counter(modes).most_common(1)[0][0] if modes else None
+
+                    weekly_summary[user_id] = {
+                        "total_fulfilled": total_fulfilled,
+                        "total_not_fulfilled": total_not_fulfilled,
+                        "mode": mode,
+                    }
+
+                    user_profile = session.exec(select(Profile).where(Profile.user_id == user_id)).one_or_none()
+                    if not user_profile:
+                        continue
+
+                    user_profile.is_nutrition_fulfilled = True if mode == 1 else False
+                    session.add(user_profile)
+
+                session.commit()
+
+                return summaries
+
+            except Exception as e:
                 session.rollback()
                 raise HTTPException(status_code=500, detail="Internal Server Error")
 
