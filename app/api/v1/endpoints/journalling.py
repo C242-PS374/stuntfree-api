@@ -79,6 +79,7 @@ def get_stunting_risk(
         "result": risk
     }
 
+# Triggered by the Cloud Scheduler
 @router.post("/nutrition/weekly-summary", status_code=status.HTTP_201_CREATED)
 @inject
 def get_weekly_summary(
@@ -89,6 +90,7 @@ def get_weekly_summary(
         "message": "Nutrition logs summarized",
     }
 
+# Triggered by the Cloud Scheduler
 @router.post("/nutrition/daily-summary", status_code=status.HTTP_201_CREATED)
 @inject
 def check_summary(
